@@ -22,7 +22,7 @@ static StaticQueue_t rxQueueBuffer;
 static uint8_t rxQueueStorage[RX_QUEUE_SIZE * RX_ITEM_SIZE];
 
 /* rx buffer used in rx_callback */
-static uint8_t rxBuffer[FRAME_LEN_MAX];
+static uint8_t rxBuffer[sizeof(Mock_Packet)];
 
 void queueInit()
 {
@@ -125,6 +125,7 @@ static void uwbTxTask(void *parameters)
                 printf("uwbTxTask:  TX ERROR\r\n");
             }
             printf("uwbTxTask: TX seq: %d \r\n", packetCache.header.seqNumber);
+            printf("uwbRxTask: TX payload: %u \r\n", packetCache.payload[TUPLE_SIZE - 5].data);
         }
     }
 }
@@ -144,6 +145,7 @@ static void uwbRxTask(void *parameters)
         if (xQueueReceive(rxQueue, &packetCache, portMAX_DELAY))
         {
             printf("uwbRxTask: RX seq: %d \r\n", packetCache.header.seqNumber);
+            printf("uwbRxTask: RX payload: %u \r\n", packetCache.payload[TUPLE_SIZE - 5].data);
         }
     }
 }
@@ -156,12 +158,12 @@ static void uwbPeriodSendTask(void *parameters)
         vTaskDelay(1000);
     }
     int seqNumber = 0;
-    Mock_Packet packetCache;
 
     while (true)
     {
         Mock_Packet packetCache;
         packetCache.header.seqNumber = seqNumber++;
+        packetCache.payload[TUPLE_SIZE - 5].data = 255;
         xQueueSend(txQueue, &packetCache, portMAX_DELAY);
         vTaskDelay(TX_PERIOD_IN_MS);
     }
@@ -216,6 +218,7 @@ void rx_cb()
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     uint32_t dataLength = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
+    printf("rx_cb: data length = %u\r\n", dataLength);
     if (dataLength != 0 && dataLength <= FRAME_LEN_MAX)
     {
         dwt_readrxdata(rxBuffer, dataLength - FCS_LEN, 0); /* No need to read the FCS/CRC. */

@@ -16,7 +16,7 @@ static dwt_config_t config = {
     9,               /* RX preamble code. Used in RX only. */
     1,               /* 0 to use standard 8 symbol SFD, 1 to use non-standard 8 symbol, 2 for non-standard 16 symbol SFD and 3 for 4z 8 symbol SDF type */
     DWT_BR_6M8,      /* Data rate. */
-    DWT_PHRMODE_STD, /* PHY header mode. */
+    DWT_PHRMODE_EXT, /* PHY header mode. */
     DWT_PHRRATE_STD, /* PHY header rate. */
     (129 + 8 - 8),   /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
     DWT_STS_MODE_OFF,
@@ -24,8 +24,8 @@ static dwt_config_t config = {
     DWT_PDOA_M0      /* PDOA mode off */
 };
 
-#define TUPLE_SIZE 5
-#define FRAME_LEN_MAX 127
+#define TUPLE_SIZE 180
+#define FRAME_LEN_MAX 200
 #define TX_PERIOD_IN_MS 200
 
 typedef struct {
@@ -38,13 +38,13 @@ typedef struct {
 
 typedef struct {
     Mock_Header header;
-    Mock_Tuple data[TUPLE_SIZE];
+    Mock_Tuple payload[TUPLE_SIZE];
 } __attribute__((packed)) Mock_Packet;
 
-#define TX_QUEUE_SIZE 15
+#define TX_QUEUE_SIZE 2
 #define TX_ITEM_SIZE sizeof(Mock_Packet)
 
-#define RX_QUEUE_SIZE 15
+#define RX_QUEUE_SIZE 2
 #define RX_ITEM_SIZE sizeof(Mock_Packet)
 
 void uwbInit();
