@@ -5,6 +5,8 @@
 #include "deca_regs.h"
 
 #define UWB_RX_TIMEOUT 0xFFFFF // RX_TIMEOUT in us
+#define TX_ANT_DLY 16385
+#define RX_ANT_DLY 16385
 
 extern dwt_txconfig_t txconfig_options;
 /* Default communication configuration. We use default non-STS DW mode. */

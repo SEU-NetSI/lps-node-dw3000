@@ -15,6 +15,11 @@ void rangingTask()
 
 void rangingInit()
 {
+    
+    
+
+
+    // Ranging Task Init
     static StaticTask_t rangingStaticTask;
     static StackType_t rangingStaticStack[configMINIMAL_STACK_SIZE];
 
