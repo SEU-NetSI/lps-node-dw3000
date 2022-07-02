@@ -117,7 +117,7 @@ static void uwbTxTask(void *parameters)
         vTaskDelay(1000);
     }
 
-    Mock_Packet packetCache;
+    Ranging_Message_t packetCache;
 
     while (true)
     {
@@ -144,7 +144,7 @@ static void uwbRxTask(void *parameters)
         vTaskDelay(1000);
     }
 
-    Mock_Packet packetCache;
+    Ranging_Message_t packetCache;
 
     while (true)
     {
@@ -155,7 +155,7 @@ static void uwbRxTask(void *parameters)
     }
 }
 
-static void uwbPeriodSendTask(void *parameters)
+static void uwbRangingTask(void *parameters)
 {
     while (!isInit)
     {
@@ -163,12 +163,10 @@ static void uwbPeriodSendTask(void *parameters)
         vTaskDelay(1000);
     }
     int seqNumber = 0;
-    Mock_Packet packetCache;
 
     while (true)
     {
-        Mock_Packet packetCache;
-        packetCache.header.seqNumber = seqNumber++;
+        Ranging_Message_t packetCache;
         xQueueSend(txQueue, &packetCache, portMAX_DELAY);
         vTaskDelay(TX_PERIOD_IN_MS);
     }
@@ -193,9 +191,15 @@ void uwbStart()
     static StackType_t uwbRxStaticStack[2 * configMINIMAL_STACK_SIZE];
 
     xTaskCreateStatic(uwbRxTask, "uwbRxTask", 2 * configMINIMAL_STACK_SIZE, NULL,
-                      configMAX_PRIORITIES - 1, uwbRxStaticStack, &uwbRxStaticTask);
+                      configMAX_PRIORITIES - 1, uwbRxStaticStack, &uwbRxStaticTask);\
+    
+    static StaticTask_t uwbRangingStaticTask;
+    static StackType_t uwbRangingStaticStack[2 * configMINIMAL_STACK_SIZE];
 
-    rangingInit();
+    xTaskCreateStatic(uwbRangingTask, "uwbRangingTask", 2 * configMINIMAL_STACK_SIZE, NULL,
+                      configMAX_PRIORITIES - 1, uwbRangingStaticStack, &uwbRangingStaticTask);
+
+    
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
