@@ -9,6 +9,7 @@
 #include "port_dw3000.h"
 #include <string.h>
 #include <stdlib.h>
+#include "ranging.h"
 
 static bool isInit = false;
 static SemaphoreHandle_t irqSemaphore;
@@ -188,11 +189,7 @@ void uwbStart()
     xTaskCreateStatic(uwbRxTask, "uwbRxTask", 2 * configMINIMAL_STACK_SIZE, NULL,
                       configMAX_PRIORITIES - 1, uwbRxStaticStack, &uwbRxStaticTask);
 
-    static StaticTask_t uwbPeriodSendStaticTask;
-    static StackType_t uwbPeriodSendStaticStack[configMINIMAL_STACK_SIZE];
-
-    xTaskCreateStatic(uwbPeriodSendTask, "uwbPeriodSendTask", configMINIMAL_STACK_SIZE, NULL,
-                      configMAX_PRIORITIES - 1, uwbPeriodSendStaticStack, &uwbPeriodSendStaticTask);
+    rangingInit();
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
