@@ -26,7 +26,9 @@ static dwt_config_t config = {
 
 #define TUPLE_SIZE 5
 #define FRAME_LEN_MAX 127
-#define TX_PERIOD_IN_MS 200
+#define TX_PERIOD_IN_MS 500
+#define TX_ANT_DLY 16385
+#define RX_ANT_DLY 16385
 
 typedef struct {
   uint8_t data;
@@ -40,6 +42,19 @@ typedef struct {
     Mock_Header header;
     Mock_Tuple data[TUPLE_SIZE];
 } __attribute__((packed)) Mock_Packet;
+
+typedef union dwTime_u {
+  uint8_t raw[5];
+  uint64_t full;
+  struct {
+    uint32_t low32;
+    uint8_t high8;
+  } __attribute__((packed));
+  struct {
+    uint8_t low8;
+    uint32_t high32;
+  } __attribute__((packed));
+} dwTime_t;
 
 #define TX_QUEUE_SIZE 15
 #define TX_ITEM_SIZE sizeof(Mock_Packet)

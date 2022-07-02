@@ -60,6 +60,11 @@ void uwbInit()
 
     /* Configure the TX spectrum parameters (power, PG delay and PG count) */
     dwt_configuretxrf(&txconfig_options);
+
+    /* Set Antenna Delay */
+    dwt_setrxantennadelay(RX_ANT_DLY);
+    dwt_settxantennadelay(TX_ANT_DLY);
+
     /* Auto re-enable receiver after a frame reception failure (except a frame wait timeout), the receiver will re-enable to re-attempt reception.*/
     dwt_or32bitoffsetreg(SYS_CFG_ID, 0, SYS_CFG_RXAUTR_BIT_MASK);
     dwt_setrxtimeout(UWB_RX_TIMEOUT);
@@ -118,7 +123,7 @@ static void uwbTxTask(void *parameters)
         {
             dwt_forcetrxoff();
             dwt_writetxdata(sizeof(packetCache) - FCS_LEN, &packetCache, 0);
-            dwt_writetxfctrl(sizeof(packetCache), 0, 0);
+            dwt_writetxfctrl(sizeof(packetCache), 0, 1);
             /* Start transmission. */
             if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_ERROR)
             {
@@ -220,6 +225,9 @@ void rx_cb()
     {
         dwt_readrxdata(rxBuffer, dataLength - FCS_LEN, 0); /* No need to read the FCS/CRC. */
     }
+    dwTime_t rx_time = {.full = 0};
+    dwt_readrxtimestamp(&rx_time);
+    printf("rx_cb: rx timestamp = %2x%8lx \r\n", rx_time.high8, rx_time.low32);
     xQueueSendFromISR(rxQueue, &rxBuffer, &xHigherPriorityTaskWoken);
     dwt_forcetrxoff();
     dwt_rxenable(DWT_START_RX_IMMEDIATE);
@@ -228,6 +236,9 @@ void rx_cb()
 
 void tx_cb()
 {
+    dwTime_t tx_time = {.full = 0};
+    dwt_readtxtimestamp(&tx_time);
+    printf("tx_cb: tx timestamp = %2x%8lx \r\n", tx_time.high8, tx_time.low32);
     // printf("tx_cb\r\n");
 }
 
