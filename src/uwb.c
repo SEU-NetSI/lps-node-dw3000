@@ -123,8 +123,8 @@ static void uwbTxTask(void* parameters) {
 
   while (true) {
     if (xQueueReceive(tx_queue, &packetCache, portMAX_DELAY)) {
-      printf("===uwbTxTask===\r\n");
-      print_ranging_message(&packetCache);
+      // printf("===uwbTxTask===\r\n");
+      // print_ranging_message(&packetCache);
       dwt_forcetrxoff();
       dwt_writetxdata(packetCache.header.message_length, &packetCache, 0);
       dwt_writetxfctrl(packetCache.header.message_length + FCS_LEN, 0, 1);
@@ -260,8 +260,8 @@ static void uwbRxTask(void* parameters) {
       // printf("before process ranging table\r\n");
       // print_ranging_table(&ranging_table_set);
       // printf("after process ranging table\r\n");
-      printf("===uwbRxTask===\r\n");
-      print_ranging_message(&rx_packet_cache.ranging_message);
+      // printf("===uwbRxTask===\r\n");
+      // print_ranging_message(&rx_packet_cache.ranging_message);
       process_ranging_message(&rx_packet_cache);
       // print_ranging_table(&ranging_table_set);
       // xSemaphoreGive(ranging_set_lock);
@@ -401,8 +401,8 @@ void rx_cb() {
 void tx_cb() {
   dw_time_t tx_time;
   dwt_readtxtimestamp(&tx_time);
-  printf("===Tx callback===\r\n");
-  printf("Current Tx Timestamp: %2x%8lx \r\n",tx_time.high8,tx_time.low32);
+  // printf("===Tx callback===\r\n");
+  // printf("Current Tx Timestasmp: %2x%8lx \r\n",tx_time.high8,tx_time.low32);
   Tf_buffer_index++;
   Tf_buffer_index %= Tf_BUFFER_POLL_SIZE;
   Tf_buffer[Tf_buffer_index].sequence_number = seq_number;

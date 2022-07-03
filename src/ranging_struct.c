@@ -172,8 +172,14 @@ void print_ranging_message(Ranging_Message_t *ranging_message) {
       ranging_message->header.last_tx_timestamp.timestamp.high8,
       ranging_message->header.last_tx_timestamp.timestamp.low32);
 
-  int unit_number = (ranging_message->header.message_length - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
+  if (ranging_message->header.message_length - sizeof(Ranging_Message_Header_t) == 0) {
+    return;
+  }
   int body_unit_number = (ranging_message->header.message_length - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
+  if (body_unit_number >= MAX_BODY_UNIT_NUMBER) {
+    printf("===print_ranging_message: wrong body unit number occurs===\r\n");
+    return;
+  }
   for (int i = 0; i < body_unit_number; i++) {
     printf("body_unit_address=%u, body_unit_seq=%u\r\n",
            ranging_message->body_units[i].address,

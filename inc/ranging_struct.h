@@ -2,11 +2,11 @@
 
 #include "FreeRTOS.h"
 
-#define MAX_NEIGHBOR_SIZE 1
+#define MAX_NEIGHBOR_SIZE 5
 #define RANGING_TABLE_SIZE MAX_NEIGHBOR_SIZE
 // #define MAX_BODY_UNIT_NUMBER \
 //   (FRAME_LEN_MAX - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t)
-#define MAX_BODY_UNIT_NUMBER 2
+#define MAX_BODY_UNIT_NUMBER 5
 #define RANGING_TABLE_HOLD_TIME 10000
 
 typedef uint16_t address_t;
