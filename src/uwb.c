@@ -14,7 +14,7 @@
 
 static bool isInit = false;
 static SemaphoreHandle_t irq_semphr;
-
+static SemaphoreHandle_t ranging_set_lock;
 static QueueHandle_t tx_queue;
 static StaticQueue_t tx_queue_buffer;
 static uint8_t tx_queue_storage[TX_QUEUE_SIZE * TX_ITEM_SIZE];
@@ -25,6 +25,9 @@ static uint8_t rx_queue_storage[RX_QUEUE_SIZE * RX_ITEM_SIZE];
 
 /* rx buffer used in rx_callback */
 static uint8_t rx_buffer[RX_BUFFER_SIZE];
+Timestamp_Tuple_t Tf_buffer[Tf_BUFFER_POLL_SIZE] = {0};
+static int Tf_buffer_index = 0;
+static int seq_number = 0;
 
 void queueInit() {
   tx_queue = xQueueCreateStatic(TX_QUEUE_SIZE, TX_ITEM_SIZE, tx_queue_storage,
@@ -37,9 +40,10 @@ void uwbInit() {
   printf("uwbInit");
   queueInit();
   ranging_table_set_init(&ranging_table_set);
-  static StaticSemaphore_t irqSemaphoreBuffer;
-  irq_semphr = xSemaphoreCreateBinaryStatic(&irqSemaphoreBuffer);
-
+  static StaticSemaphore_t irq_semphr_buffer;
+  irq_semphr = xSemaphoreCreateBinaryStatic(&irq_semphr_buffer);
+  static StaticSemaphore_t ranging_set_lock_buffer;
+  ranging_set_lock = xSemaphoreCreateBinaryStatic(&ranging_set_lock_buffer);
   isInit = true;
 
   port_set_dw_ic_spi_fastrate();
@@ -120,8 +124,8 @@ static void uwbTxTask(void *parameters) {
   while (true) {
     if (xQueueReceive(tx_queue, &packetCache, portMAX_DELAY)) {
       dwt_forcetrxoff();
-      dwt_writetxdata(sizeof(packetCache), &packetCache, 0);
-      dwt_writetxfctrl(sizeof(packetCache) + FCS_LEN, 0, 1);
+      dwt_writetxdata(packetCache.header.message_length, &packetCache, 0);
+      dwt_writetxfctrl(packetCache.header.message_length + FCS_LEN, 0, 1);
       /* Start transmission. */
       if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) ==
           DWT_ERROR) {
@@ -232,9 +236,40 @@ static void uwbRxTask(void *parameters) {
 
   while (true) {
     if (xQueueReceive(rx_queue, &rx_packet_cache, portMAX_DELAY)) {
+        xSemaphoreTake(ranging_set_lock, portMAX_DELAY);
         process_ranging_message(&rx_packet_cache);
+        xSemaphoreGive(ranging_set_lock);
     }
   }
+}
+
+static int get_sequence_number() {
+    seq_number++;
+    return seq_number;
+}
+
+static void generate_ranging_message(Ranging_Message_t* ranging_message) {
+    /* generate body unit */
+    int8_t body_unit_number = 0;
+    for (set_index_t index = ranging_table_set.full_queue_entry; index != -1; index = ranging_table_set.set_data[index].next) {
+        Ranging_Table_t* table = &ranging_table_set.set_data[index].data;
+        if (body_unit_number >= MAX_BODY_UNIT_NUMBER) {
+            break;
+        }
+        if (table->Re.timestamp.full) {
+            ranging_message->body_units[body_unit_number].address = table->neighbor_address;
+            ranging_message->body_units[body_unit_number].timestamp = table->Re;
+            body_unit_number++;
+            table->Re.sequence_number = 0;
+            table->Re.timestamp.full = 0;
+        }
+    }
+    /* generate message header */
+    ranging_message->header.source_address = MY_UWB_ADDRESS;
+    ranging_message->header.message_length = sizeof(Ranging_Message_Header_t) + sizeof(Body_Unit_t) * body_unit_number;
+    ranging_message->header.message_sequence = get_sequence_number();
+    ranging_message->header.last_tx_timestamp = Tf_buffer[Tf_buffer_index];
+    ranging_message->header.velocity = 0;
 }
 
 static void uwbRangingTask(void *parameters) {
@@ -242,13 +277,16 @@ static void uwbRangingTask(void *parameters) {
     printf("false");
     vTaskDelay(1000);
   }
-  int seq_number = 0;
 
   while (true) {
+    xSemaphoreTake(ranging_set_lock, portMAX_DELAY);
+
     Ranging_Message_t tx_packet_cache;
-    seq_number++;
-    
+    generate_ranging_message(&tx_packet_cache);
+
     xQueueSend(tx_queue, &tx_packet_cache, portMAX_DELAY);
+    xSemaphoreGive(ranging_set_lock);
+
     vTaskDelay(TX_PERIOD_IN_MS);
   }
 }
@@ -316,7 +354,12 @@ void rx_cb() {
 }
 
 void tx_cb() {
-
+    dw_time_t tx_time;
+    dwt_readtxtimestamp(&tx_time);
+    Tf_buffer_index++;
+    Tf_buffer_index %= Tf_BUFFER_POLL_SIZE;
+    Tf_buffer[Tf_buffer_index].sequence_number = seq_number;
+    Tf_buffer[Tf_buffer_index].timestamp = tx_time;
 }
 
 void rx_to_cb() {
