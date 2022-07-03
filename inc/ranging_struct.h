@@ -2,9 +2,11 @@
 
 #include "FreeRTOS.h"
 
-#define MAX_NEIGHBOR_SIZE 5
+#define MAX_NEIGHBOR_SIZE 1
 #define RANGING_TABLE_SIZE MAX_NEIGHBOR_SIZE
-#define MAX_BODY_UNIT_NUMBER (FRAME_LEN_MAX - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t) 
+// #define MAX_BODY_UNIT_NUMBER \
+//   (FRAME_LEN_MAX - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t)
+#define MAX_BODY_UNIT_NUMBER 2
 #define RANGING_TABLE_HOLD_TIME 10000
 
 typedef uint16_t address_t;
@@ -27,30 +29,30 @@ typedef union dwTime_u {
 
 /* Timestamp Tuple */
 typedef struct {
-  uint16_t sequence_number;
-  dw_time_t timestamp;
-} __attribute__((packed)) Timestamp_Tuple_t;
+  uint16_t sequence_number; // 2 byte
+  dw_time_t timestamp; // 8 byte
+} __attribute__((packed)) Timestamp_Tuple_t; // 10 byte
 
 /* Body Unit */
 typedef struct {
-  address_t address;
-  Timestamp_Tuple_t timestamp;
-} __attribute__((packed)) Body_Unit_t;
+  address_t address; // 2 byte
+  Timestamp_Tuple_t timestamp; // 10 byte
+} __attribute__((packed)) Body_Unit_t; // 12 byte
 
 /* Ranging Message Header*/
 typedef struct {
-  address_t source_address;
-  uint16_t message_sequence;
-  Timestamp_Tuple_t last_tx_timestamp;
-  short velocity;
-  uint16_t message_length;
-} __attribute__((packed)) Ranging_Message_Header_t;
+  address_t source_address; // 2 byte
+  uint16_t message_sequence; // 2 byte
+  Timestamp_Tuple_t last_tx_timestamp; // 10 byte
+  short velocity; // 2 byte 
+  uint16_t message_length; // 2 byte
+} __attribute__((packed)) Ranging_Message_Header_t; // 18 byte
 
 /* Ranging Message */
 typedef struct {
-  Ranging_Message_Header_t header;
-  Body_Unit_t body_units[MAX_NEIGHBOR_SIZE];
-} __attribute__((packed)) Ranging_Message_t;
+  Ranging_Message_Header_t header; // 18 byte
+  Body_Unit_t body_units[MAX_NEIGHBOR_SIZE]; // 12 byte * MAX_NEIGHBOR_SIZE
+} __attribute__((packed)) Ranging_Message_t; // 18 + 12 byte * MAX_NEIGHBOR_SIZE
 
 /* Ranging Message With RX Timestamp, used in RX Queue */
 typedef struct {
@@ -101,10 +103,10 @@ Ranging_Table_Set_t ranging_table_set;
 void ranging_table_set_init(Ranging_Table_Set_t *ranging_table_set);
 
 set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
-                                 Ranging_Table_t *table);
+                                     Ranging_Table_t *table);
 
 set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
-                                  address_t addr);
+                                      address_t addr);
 
 bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
                                    set_index_t index);
@@ -112,6 +114,8 @@ bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
 void print_ranging_table_tuple(Ranging_Table_t *tuple);
 
 void print_ranging_table(Ranging_Table_Set_t *ranging_table_set);
+
+void print_ranging_message(Ranging_Message_t *ranging_message);
 
 bool ranging_table_clear_expire(Ranging_Table_Set_t *ranging_table_set);
 

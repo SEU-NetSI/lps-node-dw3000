@@ -162,3 +162,24 @@ void sort_ranging_table_set(Ranging_Table_Set_t *ranging_table_set) {
   }
   ranging_table_set->full_queue_entry = new_head;
 }
+
+void print_ranging_message(Ranging_Message_t *ranging_message) {
+  printf("message_length=%u, message_sequence=%d, source_address=%u, velocity=%d\r\n, last_tx_timestamp_seq=%u, last_tx_timestamp=%2x%8lx\r\n",
+      ranging_message->header.message_length,
+      ranging_message->header.message_sequence,
+      ranging_message->header.source_address, ranging_message->header.velocity,
+      ranging_message->header.last_tx_timestamp.sequence_number,
+      ranging_message->header.last_tx_timestamp.timestamp.high8,
+      ranging_message->header.last_tx_timestamp.timestamp.low32);
+
+  int unit_number = (ranging_message->header.message_length - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
+  int body_unit_number = (ranging_message->header.message_length - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
+  for (int i = 0; i < body_unit_number; i++) {
+    printf("body_unit_address=%u, body_unit_seq=%u\r\n",
+           ranging_message->body_units[i].address,
+           ranging_message->body_units[i].timestamp.sequence_number);
+    printf("body_unit_timestamp=%2x%8lx\r\n",
+           ranging_message->body_units[i].timestamp.timestamp.high8,
+           ranging_message->body_units[i].timestamp.timestamp.low32);
+  }
+}

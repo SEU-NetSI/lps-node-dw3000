@@ -5,14 +5,14 @@
 #include "deca_regs.h"
 #include "ranging_struct.h"
 
-#define UWB_RX_TIMEOUT 0xFFFFF  // RX_TIMEOUT in us
-#define MAX_TIMESTAMP 1099511627776 //2**40
+#define UWB_RX_TIMEOUT 0xFFFFF       // RX_TIMEOUT in us
+#define MAX_TIMESTAMP 1099511627776  // 2**40
 #define TX_ANT_DLY 16385
 #define RX_ANT_DLY 16385
 
 #define SPEED_OF_LIGHT 299702547
-#define FRAME_LEN_MAX      127
-#define FRAME_LEN_MAX_EX   1023
+#define FRAME_LEN_MAX 127
+#define FRAME_LEN_MAX_EX 1023
 
 extern dwt_txconfig_t txconfig_options;
 /* Default communication configuration. We use default non-STS DW mode. */
@@ -35,14 +35,14 @@ static dwt_config_t config = {
     DWT_PDOA_M0     /* PDOA mode off */
 };
 
-#define MY_UWB_ADDRESS 2
+#define MY_UWB_ADDRESS 1
 #define TX_QUEUE_SIZE 5
 #define RX_QUEUE_SIZE 5
 #define TX_ITEM_SIZE sizeof(Ranging_Message_t)
 #define RX_ITEM_SIZE sizeof(Ranging_Message_With_Timestamp_t)
-#define RX_BUFFER_SIZE RX_ITEM_SIZE // RX_BUFFER_SIZE ≤ FRAME_LEN_MAX
+#define RX_BUFFER_SIZE RX_ITEM_SIZE  // RX_BUFFER_SIZE ≤ FRAME_LEN_MAX
 #define Tf_BUFFER_POLL_SIZE 5
-#define TX_PERIOD_IN_MS 1000
+#define TX_PERIOD_IN_MS 3000
 
 void uwbInit();
 void uwbStart();
