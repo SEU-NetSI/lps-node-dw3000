@@ -54,7 +54,7 @@ static bool ranging_table_set_free(Ranging_Table_Set_t *ranging_table_set,
   return false;
 }
 
-void ranging_table_init(Ranging_Table_Set_t *ranging_table_set) {
+void ranging_table_set_init(Ranging_Table_Set_t *ranging_table_set) {
   set_index_t i;
   for (i = 0; i < RANGING_TABLE_SIZE - 1; i++) {
     ranging_table_set->set_data[i].next = i + 1;
@@ -65,7 +65,7 @@ void ranging_table_init(Ranging_Table_Set_t *ranging_table_set) {
   ranging_table_set->size = 0;
 }
 
-set_index_t ranging_table_insert(Ranging_Table_Set_t *ranging_table_set,
+set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
                                  Ranging_Table_t *table) {
   set_index_t candidate = ranging_table_set_malloc(ranging_table_set);
   if (candidate != -1) {
@@ -76,7 +76,7 @@ set_index_t ranging_table_insert(Ranging_Table_Set_t *ranging_table_set,
   return candidate;
 }
 
-set_index_t find_in_ranging_table(Ranging_Table_Set_t *ranging_table_set,
+set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
                                   address_t addr) {
   set_index_t iter = ranging_table_set->full_queue_entry;
   while (iter != -1) {
@@ -116,7 +116,7 @@ bool ranging_table_clear_expire(Ranging_Table_Set_t *ranging_table_set) {
   return has_changed;
 }
 
-void sort_ranging_table(Ranging_Table_Set_t *ranging_table_set) {
+void sort_ranging_table_set(Ranging_Table_Set_t *ranging_table_set) {
   if (ranging_table_set->full_queue_entry == -1) {
     return;
   }

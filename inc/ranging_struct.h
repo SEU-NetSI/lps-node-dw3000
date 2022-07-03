@@ -4,6 +4,7 @@
 
 #define MAX_NEIGHBOR_SIZE 5
 #define RANGING_TABLE_SIZE MAX_NEIGHBOR_SIZE
+#define RANGING_TABLE_HOLD_TIME 10000
 
 typedef uint16_t address_t;
 typedef portTickType Time_t;
@@ -41,6 +42,7 @@ typedef struct {
   uint16_t message_sequence;
   Timestamp_Tuple_t last_tx_timestamp;
   short velocity;
+  uint16_t message_length;
 } __attribute__((packed)) Ranging_Message_Header_t;
 
 /* Ranging Message */
@@ -95,12 +97,12 @@ typedef struct {
 Ranging_Table_Set_t ranging_table_set;
 
 /*Ranging Table Set Operations*/
-void ranging_table_init(Ranging_Table_Set_t *ranging_table_set);
+void ranging_table_set_init(Ranging_Table_Set_t *ranging_table_set);
 
-set_index_t ranging_table_insert(Ranging_Table_Set_t *ranging_table_set,
+set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
                                  Ranging_Table_t *table);
 
-set_index_t find_in_ranging_table(Ranging_Table_Set_t *ranging_table_set,
+set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
                                   address_t addr);
 
 bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
@@ -112,4 +114,4 @@ void print_ranging_table(Ranging_Table_Set_t *ranging_table_set);
 
 bool ranging_table_clear_expire(Ranging_Table_Set_t *ranging_table_set);
 
-void sort_ranging_table(Ranging_Table_Set_t *ranging_table_set);
+void sort_ranging_table_set(Ranging_Table_Set_t *ranging_table_set);
