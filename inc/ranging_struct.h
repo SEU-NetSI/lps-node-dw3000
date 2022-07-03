@@ -49,6 +49,12 @@ typedef struct {
   Body_Unit_t body_units[MAX_NEIGHBOR_SIZE];
 } __attribute__((packed)) Ranging_Message_t;
 
+/* Ranging Message With RX Timestamp, used in RX Queue */
+typedef struct {
+  Ranging_Message_t ranging_message;
+  dw_time_t rx_time;
+} __attribute__((packed)) Ranging_Message_With_Timestamp_t;
+
 /* Ranging Table
   +------+------+------+------+------+
   |  Rp  |  Tr  |  Rf  |  P   |  tn  |

@@ -24,7 +24,7 @@ static StaticQueue_t rxQueueBuffer;
 static uint8_t rxQueueStorage[RX_QUEUE_SIZE * RX_ITEM_SIZE];
 
 /* rx buffer used in rx_callback */
-static uint8_t rxBuffer[FRAME_LEN_MAX];
+static uint8_t rxBuffer[RX_BUFFER_SIZE];
 
 void queueInit() {
   txQueue = xQueueCreateStatic(TX_QUEUE_SIZE, TX_ITEM_SIZE, txQueueStorage,

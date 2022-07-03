@@ -34,7 +34,8 @@ static dwt_config_t config = {
 #define TX_QUEUE_SIZE 5
 #define RX_QUEUE_SIZE 5
 #define TX_ITEM_SIZE sizeof(Ranging_Message_t)
-#define RX_ITEM_SIZE sizeof(Ranging_Message_t)
+#define RX_ITEM_SIZE sizeof(Ranging_Message_With_Timestamp_t)
+#define RX_BUFFER_SIZE RX_ITEM_SIZE // RX_BUFFER_SIZE ≤ FRAME_LEN_MAX
 #define TX_PERIOD_IN_MS 200
 
 void uwbInit();
