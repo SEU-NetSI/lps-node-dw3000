@@ -66,7 +66,7 @@ void ranging_table_set_init(Ranging_Table_Set_t *ranging_table_set) {
 }
 
 set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
-                                 Ranging_Table_t *table) {
+                                     Ranging_Table_t *table) {
   set_index_t candidate = ranging_table_set_malloc(ranging_table_set);
   if (candidate != -1) {
     memcpy(&ranging_table_set->set_data[candidate].data, table,
@@ -77,7 +77,7 @@ set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
 }
 
 set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
-                                  address_t addr) {
+                                      address_t addr) {
   set_index_t iter = ranging_table_set->full_queue_entry;
   while (iter != -1) {
     Ranging_Table_Set_Item_t cur = ranging_table_set->set_data[iter];
@@ -94,9 +94,25 @@ bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
   return ranging_table_set_free(ranging_table_set, index);
 }
 
-void print_ranging_table_tuple(Ranging_Table_Set_t *tuple) {}
+void print_ranging_table_tuple(Ranging_Table_t *table) {
+  printf("Rp = %2x%8lx, Tr = %2x%8lx, Rf = %2x%8lx, \r\n",
+         table->Rp.timestamp.high8, table->Rp.timestamp.low32,
+         table->Tr.timestamp.high8, table->Tr.timestamp.low32,
+         table->Rf.timestamp.high8, table->Rf.timestamp.low32);
+  printf("Tp = %2x%8lx, Rr = %2x%8lx, Tf = %2x%8lx, Re = %2x%8lx, \r\n",
+         table->Tp.timestamp.high8, table->Tp.timestamp.low32,
+         table->Rr.timestamp.high8, table->Rr.timestamp.low32,
+         table->Tf.timestamp.high8, table->Tf.timestamp.low32,
+         table->Re.timestamp.high8, table->Re.timestamp.low32);
+  printf("====\r\n");
+}
 
-void print_ranging_table(Ranging_Table_Set_t *ranging_table_set) {}
+void print_ranging_table(Ranging_Table_Set_t *ranging_table_set) {
+  for (set_index_t index = ranging_table_set->full_queue_entry; index != -1;
+       index = ranging_table_set->set_data[index].next) {
+    print_ranging_table_tuple(&ranging_table_set->set_data[index].data);
+  }
+}
 
 bool ranging_table_clear_expire(Ranging_Table_Set_t *ranging_table_set) {
   set_index_t candidate = ranging_table_set->full_queue_entry;

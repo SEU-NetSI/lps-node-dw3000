@@ -109,7 +109,7 @@ set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
 bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
                                    set_index_t index);
 
-void print_ranging_table_tuple(Ranging_Table_Set_t *tuple);
+void print_ranging_table_tuple(Ranging_Table_t *tuple);
 
 void print_ranging_table(Ranging_Table_Set_t *ranging_table_set);
 
