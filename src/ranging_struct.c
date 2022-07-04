@@ -95,15 +95,35 @@ bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
 }
 
 void print_ranging_table_tuple(Ranging_Table_t *table) {
-  printf("Rp = %2x%8lx, Tr = %2x%8lx, Rf = %2x%8lx, \r\n",
-         table->Rp.timestamp.high8, table->Rp.timestamp.low32,
-         table->Tr.timestamp.high8, table->Tr.timestamp.low32,
-         table->Rf.timestamp.high8, table->Rf.timestamp.low32);
-  printf("Tp = %2x%8lx, Rr = %2x%8lx, Tf = %2x%8lx, Re = %2x%8lx, \r\n",
-         table->Tp.timestamp.high8, table->Tp.timestamp.low32,
-         table->Rr.timestamp.high8, table->Rr.timestamp.low32,
-         table->Tf.timestamp.high8, table->Tf.timestamp.low32,
-         table->Re.timestamp.high8, table->Re.timestamp.low32);
+  // printf("Rp = %2x%8lx, Tr = %2x%8lx, Rf = %2x%8lx, \r\n",
+  //        table->Rp.timestamp.high8, table->Rp.timestamp.low32,
+  //        table->Tr.timestamp.high8, table->Tr.timestamp.low32,
+  //        table->Rf.timestamp.high8, table->Rf.timestamp.low32);
+  // printf("Tp = %2x%8lx, Rr = %2x%8lx, Tf = %2x%8lx, Re = %2x%8lx, \r\n",
+  //        table->Tp.timestamp.high8, table->Tp.timestamp.low32,
+  //        table->Rr.timestamp.high8, table->Rr.timestamp.low32,
+  //        table->Tf.timestamp.high8, table->Tf.timestamp.low32,
+  //        table->Re.timestamp.high8, table->Re.timestamp.low32);
+  // printf("====\r\n");
+  // printf("Rp = %llu, Tr = %llu, Rf = %llu, \r\n",
+  //        table->Rp.timestamp.full,
+  //        table->Tr.timestamp.full, 
+  //        table->Rf.timestamp.full);
+  // printf("Tp = %llu, Rr = %llu, Tf = %llu, Re = %llu, \r\n",
+  //        table->Tp.timestamp.full,
+  //        table->Rr.timestamp.full,
+  //        table->Tf.timestamp.full,
+  //        table->Re.timestamp.full);
+  // printf("====\r\n");
+  printf("Rp = %u, Tr = %u, Rf = %u, \r\n",
+         table->Rp.sequence_number,
+         table->Tr.sequence_number, 
+         table->Rf.sequence_number);
+  printf("Tp = %u, Rr = %u, Tf = %u, Re = %u, \r\n",
+         table->Tp.sequence_number,
+         table->Rr.sequence_number,
+         table->Tf.sequence_number,
+         table->Re.sequence_number);
   printf("====\r\n");
 }
 
