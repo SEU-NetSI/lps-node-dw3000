@@ -149,7 +149,7 @@ int16_t compute_distance(Ranging_Table_t* table) {
   tprop_ctn = (diff1 * tReply2 + diff2 * tReply1 + diff2 * diff1) / (tRound1 + tRound2 + tReply1 + tReply2);
 
   int16_t distance = (int16_t) tprop_ctn * 0.4691763978616;
-  printf("distance=%d cm\r\n", distance);
+  // printf("distance=%d cm\r\n", distance);
   /* update ranging table */
   table->Rp = table->Rf;
   table->Tp = table->Tf;
@@ -223,7 +223,8 @@ void process_ranging_message(
   if (neighbor_ranging_table->Tr.timestamp.full && neighbor_ranging_table->Rf.timestamp.full && neighbor_ranging_table->Tf.timestamp.full) {
       // printf("===before compute distance===\r\n");
       // print_ranging_table(&ranging_table_set);
-      compute_distance(neighbor_ranging_table);
+      int16_t distance = compute_distance(neighbor_ranging_table);
+      printf("distance to neighbor %d = %d cm\r\n", ranging_message->header.source_address, distance);
       // printf("===after compute distance===\r\n");
       // print_ranging_table(&ranging_table_set);
   } else if (neighbor_ranging_table->Rf.timestamp.full && neighbor_ranging_table->Tf.timestamp.full) {
