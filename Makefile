@@ -49,76 +49,9 @@ USB_CDC=cdc
 OBJS+=$(foreach mod, $(USB_CORES), Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_$(mod).o)
 OBJS+=$(foreach mod, $(USB_CDC), Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_$(mod).o)
 
-# #libdw1000
-# INCLUDES+=-Ivendor/libdw1000/inc
-# OBJS+=vendor/libdw1000/src/libdw1000.o vendor/libdw1000/src/libdw1000Spi.o
-
-# OBJS+=src/dwOps.o
 #libdw3000
 INCLUDES+=-Ilibdw3000/include
 OBJS+=libdw3000/src/libdw3000.o libdw3000/src/libdw3000Spi.o
-# INCLUDES+=-Ilibdw3000/decadriver -Ilibdw3000/platform -libdw3000/config_options.h
-# OBJS+=libdw3000/decadriver/deca_device.o \
-# libdw3000/platform/deca_sleep.o \
-# libdw3000/platform/deca_spi.o \
-# libdw3000/platform/port_dw3000.o \
-# libdw3000/config_options.o
-
-# # libdw3000 examples
-# INCLUDES+=-Ilibdw3000/examples/examples_info/ \
-# -Ilibdw3000/examples/shared_data/  \
-# -Ilibdw3000
-
-# OBJS+=libdw3000/examples/examples_info/example_info.o \
-# libdw3000/examples/shared_data/shared_functions.o \
-# libdw3000/examples/ex_00a_reading_dev_id/read_dev_id.o \
-# libdw3000/examples/ex_01a_simple_tx/simple_tx.o \
-# libdw3000/examples/ex_01b_tx_sleep/tx_sleep.o \
-# libdw3000/examples/ex_01b_tx_sleep/tx_sleep_idleRC.o \
-# libdw3000/examples/ex_01c_tx_sleep_auto/tx_sleep_auto.o \
-# libdw3000/examples/ex_01d_tx_timed_sleep/tx_timed_sleep.o \
-# libdw3000/examples/ex_01e_tx_with_cca/tx_with_cca.o \
-# libdw3000/examples/ex_01g_simple_tx_sts_sdc/simple_tx_sts_sdc.o \
-# libdw3000/examples/ex_01h_simple_tx_pdoa/simple_tx_pdoa.o \
-# libdw3000/examples/ex_01i_simple_tx_aes/simple_tx_aes.o \
-# libdw3000/examples/ex_02a_simple_rx/simple_rx.o \
-# libdw3000/examples/ex_02c_rx_diagnostics/rx_diagnostics.o \
-# libdw3000/examples/ex_02d_rx_sniff/rx_sniff.o \
-# libdw3000/examples/ex_02f_rx_with_crystal_trim/rx_with_xtal_trim.o \
-# libdw3000/examples/ex_02g_simple_rx_sts_sdc/simple_rx_sts_sdc.o \
-# libdw3000/examples/ex_02h_simple_rx_pdoa/simple_rx_pdoa.o \
-# libdw3000/examples/ex_02i_simple_rx_aes/simple_rx_aes.o \
-# libdw3000/examples/ex_03a_tx_wait_resp/tx_wait_resp.o \
-# libdw3000/examples/ex_03b_rx_send_resp/rx_send_resp.o \
-# libdw3000/examples/ex_03d_tx_wait_resp_interrupts/tx_wait_resp_int.o \
-# libdw3000/examples/ex_04a_cont_wave/continuous_wave.o \
-# libdw3000/examples/ex_04b_cont_frame/continuous_frame.o \
-# libdw3000/examples/ex_05a_ds_twr_init/ds_twr_initiator.o \
-# libdw3000/examples/ex_05a_ds_twr_init/ds_twr_initiator_sts.o \
-# libdw3000/examples/ex_05b_ds_twr_resp/ds_twr_responder.o \
-# libdw3000/examples/ex_05b_ds_twr_resp/ds_twr_responder_sts.o \
-# libdw3000/examples/ex_05c_ds_twr_init_sts_sdc/ds_twr_sts_sdc_initiator.o \
-# libdw3000/examples/ex_05d_ds_twr_resp_sts_sdc/ds_twr_sts_sdc_responder.o \
-# libdw3000/examples/ex_06a_ss_twr_initiator/ss_twr_initiator.o \
-# libdw3000/examples/ex_06a_ss_twr_initiator/ss_twr_initiator_sts.o \
-# libdw3000/examples/ex_06a_ss_twr_initiator/ss_twr_initiator_sts_no_data.o \
-# libdw3000/examples/ex_06b_ss_twr_responder/ss_twr_responder.o \
-# libdw3000/examples/ex_06b_ss_twr_responder/ss_twr_responder_sts.o \
-# libdw3000/examples/ex_06b_ss_twr_responder/ss_twr_responder_sts_no_data.o \
-# libdw3000/examples/ex_06e_AES_ss_twr_initiator/ss_aes_twr_initiator.o \
-# libdw3000/examples/ex_06f_AES_ss_twr_responder/ss_aes_twr_responder.o \
-# libdw3000/examples/ex_07a_ack_data_tx/ack_data_tx.o \
-# libdw3000/examples/ex_07b_ack_data_rx/ack_data_rx.o \
-# libdw3000/examples/ex_07c_ack_data_rx_dbl_buff/ack_data_rx_dbl_buff.o \
-# libdw3000/examples/ex_11a_spi_crc/spi_crc.o \
-# libdw3000/examples/ex_13a_gpio/gpio_example.o \
-# libdw3000/examples/ex_14_otp_write/otp_write.o \
-# libdw3000/examples/ex_15_le_pend/le_pend_rx.o \
-# libdw3000/examples/ex_15_le_pend/le_pend_tx.o \
-
-# libdw3000 examples mac802.15
-# INCLUDES+=-Ilibdw3000/MAC_802_15_8/ -Ilibdw3000/MAC_802_15_4/
-# OBJS+=libdw3000/MAC_802_15_8/mac_802_15_8.o libdw3000/MAC_802_15_4/mac_802_15_4.o
 
 CFLAGS+=$(PROCESSOR) $(INCLUDES) -O3 -g3 -Wall -Wno-pointer-sign -std=gnu11
 LDFLAGS+=$(PROCESSOR) --specs=nano.specs --specs=nosys.specs -lm -lc -u _printf_float
