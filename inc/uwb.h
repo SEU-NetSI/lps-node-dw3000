@@ -1,8 +1,8 @@
 #ifndef __UWB_H__
 #define __UWB_H__
 
-#include "deca_device_api.h"
-#include "deca_regs.h"
+#include "libdw3000.h"
+#include "dw3000.h"
 #include "ranging_struct.h"
 
 #define UWB_RX_TIMEOUT 0xFFFFF       // RX_TIMEOUT in us
@@ -14,7 +14,11 @@
 #define FRAME_LEN_MAX 127
 #define FRAME_LEN_MAX_EX 1023
 
-extern dwt_txconfig_t txconfig_options;
+static dwt_txconfig_t txconfig_options = {
+    .PGcount = 0x0,
+    .PGdly = 0x34,
+    .power = 0xfdfdfdfd
+};
 /* Default communication configuration. We use default non-STS DW mode. */
 static dwt_config_t config = {
     5,            /* Channel number. */

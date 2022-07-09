@@ -55,20 +55,22 @@ OBJS+=$(foreach mod, $(USB_CDC), Middlewares/ST/STM32_USB_Device_Library/Class/C
 
 # OBJS+=src/dwOps.o
 #libdw3000
-INCLUDES+=-Ilibdw3000/decadriver -Ilibdw3000/platform -libdw3000/config_options.h
-OBJS+=libdw3000/decadriver/deca_device.o \
-libdw3000/platform/deca_sleep.o \
-libdw3000/platform/deca_spi.o \
-libdw3000/platform/port_dw3000.o \
-libdw3000/config_options.o
+INCLUDES+=-Ilibdw3000/include
+OBJS+=libdw3000/src/libdw3000.o libdw3000/src/libdw3000Spi.o
+# INCLUDES+=-Ilibdw3000/decadriver -Ilibdw3000/platform -libdw3000/config_options.h
+# OBJS+=libdw3000/decadriver/deca_device.o \
+# libdw3000/platform/deca_sleep.o \
+# libdw3000/platform/deca_spi.o \
+# libdw3000/platform/port_dw3000.o \
+# libdw3000/config_options.o
 
-# libdw3000 examples
-INCLUDES+=-Ilibdw3000/examples/examples_info/ \
--Ilibdw3000/examples/shared_data/  \
--Ilibdw3000
+# # libdw3000 examples
+# INCLUDES+=-Ilibdw3000/examples/examples_info/ \
+# -Ilibdw3000/examples/shared_data/  \
+# -Ilibdw3000
 
-OBJS+=libdw3000/examples/examples_info/example_info.o \
-libdw3000/examples/shared_data/shared_functions.o \
+# OBJS+=libdw3000/examples/examples_info/example_info.o \
+# libdw3000/examples/shared_data/shared_functions.o \
 # libdw3000/examples/ex_00a_reading_dev_id/read_dev_id.o \
 # libdw3000/examples/ex_01a_simple_tx/simple_tx.o \
 # libdw3000/examples/ex_01b_tx_sleep/tx_sleep.o \
@@ -115,8 +117,8 @@ libdw3000/examples/shared_data/shared_functions.o \
 # libdw3000/examples/ex_15_le_pend/le_pend_tx.o \
 
 # libdw3000 examples mac802.15
-INCLUDES+=-Ilibdw3000/MAC_802_15_8/ -Ilibdw3000/MAC_802_15_4/
-OBJS+=libdw3000/MAC_802_15_8/mac_802_15_8.o libdw3000/MAC_802_15_4/mac_802_15_4.o
+# INCLUDES+=-Ilibdw3000/MAC_802_15_8/ -Ilibdw3000/MAC_802_15_4/
+# OBJS+=libdw3000/MAC_802_15_8/mac_802_15_8.o libdw3000/MAC_802_15_4/mac_802_15_4.o
 
 CFLAGS+=$(PROCESSOR) $(INCLUDES) -O3 -g3 -Wall -Wno-pointer-sign -std=gnu11
 LDFLAGS+=$(PROCESSOR) --specs=nano.specs --specs=nosys.specs -lm -lc -u _printf_float

@@ -7,11 +7,12 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
-#include "port_dw3000.h"
 #include "queue.h"
 #include "semphr.h"
 #include "task.h"
+#include "dwTypes.h"
 
+extern dwOps_t dwt_ops;
 static bool isInit = false;
 static SemaphoreHandle_t irq_semphr;
 static SemaphoreHandle_t ranging_set_lock;
@@ -35,6 +36,88 @@ void queueInit() {
   rx_queue = xQueueCreateStatic(RX_QUEUE_SIZE, RX_ITEM_SIZE, rx_queue_storage,
                                 &rx_queue_buffer);
 }
+SPI_HandleTypeDef hspi1;
+uint16_t alignedBuffer[64];
+
+void spiRead(const void *header, size_t headerLength, void* data, size_t dataLength) {
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 0);
+
+  memcpy(alignedBuffer, header, headerLength);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, headerLength, HAL_MAX_DELAY);
+  HAL_SPI_Receive(&hspi1, (uint8_t *)alignedBuffer, dataLength, HAL_MAX_DELAY);
+  memcpy(data, alignedBuffer, dataLength);
+
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 1);
+}
+
+void spiWrite(const void *header, size_t headerLength, const void* data, size_t dataLength) {
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 0);
+
+  memcpy(alignedBuffer, header, headerLength);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, headerLength, HAL_MAX_DELAY);
+  memcpy(alignedBuffer, data, dataLength);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, dataLength, HAL_MAX_DELAY);
+
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 1);
+}
+
+void delayms(unsigned int delay) {
+  vTaskDelay(delay);
+}
+
+void spiSetSpeed(dwSpiSpeed_t speed) {
+  if (speed == dwSpiSpeedLow) {
+    hspi1.Instance = SPI1;
+    hspi1.Init.Mode = SPI_MODE_MASTER;
+    hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+    hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
+    hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+    hspi1.Init.CRCPolynomial = 10;
+    hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+    hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+    HAL_SPI_Init(&hspi1);
+  } else if (speed == dwSpiSpeedHigh) {
+    hspi1.Instance = SPI1;
+    hspi1.Init.Mode = SPI_MODE_MASTER;
+    hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+    hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+    hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi1.Init.TIMode = SPI_TIMODE_DISABLED;
+    hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+    hspi1.Init.CRCPolynomial = 10;
+    hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+    hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+    HAL_SPI_Init(&hspi1);
+  }
+}
+
+#define DW_RESET_Pin GPIO_PIN_12
+#define DW_RESET_GPIO_Port GPIOB
+
+void reset(void) {
+    HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 0);
+    HAL_Delay(2);
+    HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 1);
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+}
+
+void dwOpsInit() {
+  dwt_ops.spiRead = spiRead;
+  dwt_ops.spiWrite = spiWrite;
+  dwt_ops.delayms = delayms;
+  dwt_ops.spiSetSpeed = spiSetSpeed;
+  dwt_ops.reset = reset;
+}
 
 void uwbInit() {
   printf("uwbInit");
@@ -45,10 +128,11 @@ void uwbInit() {
   static StaticSemaphore_t ranging_set_lock_buffer;
   ranging_set_lock = xSemaphoreCreateBinaryStatic(&ranging_set_lock_buffer);
   isInit = true;
-
-  port_set_dw_ic_spi_fastrate();
-  reset_DWIC();
-  Sleep(2);
+  dwOpsInit();
+  // port_set_dw_ic_spi_fastrate();
+  dwt_ops.spiSetSpeed(dwSpiSpeedHigh);
+  dwt_ops.reset();
+  dwt_ops.delayms(2);
   while (!dwt_checkidlerc()) /* Need to make sure DW IC is in IDLE_RC before
                                 proceeding */
   {
@@ -63,7 +147,7 @@ void uwbInit() {
     return;
   }
   dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK);
-
+  
   /* Configure the TX spectrum parameters (power, PG delay and PG count) */
   dwt_configuretxrf(&txconfig_options);
 

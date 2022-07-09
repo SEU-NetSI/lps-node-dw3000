@@ -48,8 +48,7 @@
 #include "test_support.h"
 #include "production_test.h"
 
-#include "deca_device_api.h"
-#include "examples_defines.h"
+#include "libdw3000.h"
 
 #include "uwb.h"
 #define POWER_LEVELS 10
