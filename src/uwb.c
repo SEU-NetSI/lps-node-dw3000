@@ -5,12 +5,14 @@
 #include <stdlib.h>
 #include <stm32f0xx_hal.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "FreeRTOS.h"
 #include "port_dw3000.h"
 #include "queue.h"
 #include "semphr.h"
 #include "task.h"
+#include "usbcomm.h"
 
 static bool isInit = false;
 static SemaphoreHandle_t irq_semphr;
@@ -128,6 +130,11 @@ static void uwbTxTask(void* parameters) {
       dwt_forcetrxoff();
       dwt_writetxdata(packetCache.header.message_length, &packetCache, 0);
       dwt_writetxfctrl(packetCache.header.message_length + FCS_LEN, 0, 1);
+      
+      write(STDOUT_FILENO, "\xbc", 1);
+      write(STDOUT_FILENO, &packetCache.header.source_address, 2);
+      write(STDOUT_FILENO, &packetCache.header.message_sequence, 2);
+
       /* Start transmission. */
       if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) ==
           DWT_ERROR) {
@@ -224,7 +231,7 @@ void process_ranging_message(
       // printf("===before compute distance===\r\n");
       // print_ranging_table(&ranging_table_set);
       int16_t distance = compute_distance(neighbor_ranging_table);
-      printf("distance to neighbor %d = %d cm\r\n", ranging_message->header.source_address, distance);
+      // printf("distance to neighbor %d = %d cm\r\n", ranging_message->header.source_address, distance);
       // printf("===after compute distance===\r\n");
       // print_ranging_table(&ranging_table_set);
   } else if (neighbor_ranging_table->Rf.timestamp.full && neighbor_ranging_table->Tf.timestamp.full) {

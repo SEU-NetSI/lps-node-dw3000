@@ -35,7 +35,7 @@ static dwt_config_t config = {
     DWT_PDOA_M0     /* PDOA mode off */
 };
 
-#define MY_UWB_ADDRESS 3
+#define MY_UWB_ADDRESS 1
 #define TX_QUEUE_SIZE 5
 #define RX_QUEUE_SIZE 5
 #define TX_ITEM_SIZE sizeof(Ranging_Message_t)
