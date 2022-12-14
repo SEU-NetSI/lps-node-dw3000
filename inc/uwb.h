@@ -7,8 +7,10 @@
 #include "queue.h"
 #include "ranging_struct.h"
 
+#define CONFIG_UWB_ADDRESS 1
+
 /* Function Switch */
-#define ENABLE_PHR_EXT_MODE
+// #define ENABLE_PHR_EXT_MODE
 
 #define SPEED_OF_LIGHT 299702547
 #define MAX_TIMESTAMP 1099511627776  // 2**40
@@ -24,8 +26,10 @@
 #endif
 
 /* Queue Constants */
-#define TX_QUEUE_SIZE 15
+#define TX_QUEUE_SIZE 2
 #define TX_QUEUE_ITEM_SIZE sizeof(UWB_Packet_t)
+
+#define DEFAULT_RX_TIMEOUT 10000
 
 typedef uint16_t address_t;
 

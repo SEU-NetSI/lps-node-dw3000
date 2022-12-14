@@ -4,16 +4,12 @@
 #include "queue.h"
 #include "task.h"
 #include "system.h"
-
-#include "autoconf.h"
-#include "debug.h"
-#include "log.h"
 #include "assert.h"
-#include "adhocdeck.h"
+#include "uwb.h"
 #include "ranging_struct.h"
 #include "swarm_ranging.h"
 
-static uint16_t MY_UWB_ADDRESS;
+static uint16_t MY_UWB_ADDRESS = 1;
 
 static QueueHandle_t rxQueue;
 static Ranging_Table_Set_t rangingTableSet;
@@ -25,7 +21,6 @@ static Timestamp_Tuple_t TfBuffer[Tf_BUFFER_POOL_SIZE] = {0};
 static int TfBufferIndex = 0;
 static int rangingSeqNumber = 1;
 
-static logVarId_t idVelocityX, idVelocityY, idVelocityZ;
 static float velocity;
 
 int16_t distanceTowards[RANGING_TABLE_SIZE + 1] = {0};
@@ -64,11 +59,6 @@ int16_t getDistance(uint16_t neighborAddress) {
 static void uwbRangingTxTask(void *parameters) {
   systemWaitStart();
 
-  /* velocity log variable id */
-  idVelocityX = logGetVarId("stateEstimate", "vx");
-  idVelocityY = logGetVarId("stateEstimate", "vy");
-  idVelocityZ = logGetVarId("stateEstimate", "vz");
-
   UWB_Packet_t txPacketCache;
   txPacketCache.header.type = RANGING;
 //  txPacketCache.header.mac = ? TODO init mac header
@@ -105,14 +95,10 @@ void rangingInit() {
   listener.txCb = rangingTxCallback;
   uwbRegisterListener(&listener);
 
-  idVelocityX = logGetVarId("stateEstimate", "vx");
-  idVelocityY = logGetVarId("stateEstimate", "vy");
-  idVelocityZ = logGetVarId("stateEstimate", "vz");
-
-  xTaskCreate(uwbRangingTxTask, ADHOC_DECK_RANGING_TX_TASK_NAME, 4 * configMINIMAL_STACK_SIZE, NULL,
-              ADHOC_DECK_TASK_PRI, &uwbRangingTxTaskHandle); // TODO optimize STACK SIZE
-  xTaskCreate(uwbRangingRxTask, ADHOC_DECK_RANGING_RX_TASK_NAME, 4 * configMINIMAL_STACK_SIZE, NULL,
-              ADHOC_DECK_TASK_PRI, &uwbRangingRxTaskHandle); // TODO optimize STACK SIZE
+  xTaskCreate(uwbRangingTxTask, "ADHOC_DECK_RANGING_TX_TASK_NAME", 4 * configMINIMAL_STACK_SIZE, NULL,
+              configMAX_PRIORITIES - 1, &uwbRangingTxTaskHandle); // TODO optimize STACK SIZE
+  xTaskCreate(uwbRangingRxTask, "ADHOC_DECK_RANGING_RX_TASK_NAME", 4 * configMINIMAL_STACK_SIZE, NULL,
+              configMAX_PRIORITIES - 1, &uwbRangingRxTaskHandle); // TODO optimize STACK SIZE
 }
 
 int16_t computeDistance(Timestamp_Tuple_t Tp, Timestamp_Tuple_t Rp,
@@ -266,9 +252,9 @@ int generateRangingMessage(Ranging_Message_t *rangingMessage) {
   rangingMessage->header.msgLength = sizeof(Ranging_Message_Header_t) + sizeof(Body_Unit_t) * bodyUnitNumber;
   rangingMessage->header.msgSequence = curSeqNumber;
   rangingMessage->header.lastTxTimestamp = TfBuffer[TfBufferIndex];
-  float velocityX = logGetFloat(idVelocityX);
-  float velocityY = logGetFloat(idVelocityY);
-  float velocityZ = logGetFloat(idVelocityZ);
+  float velocityX = 0;
+  float velocityY = 0;
+  float velocityZ = 0;
   velocity = sqrt(pow(velocityX, 2) + pow(velocityY, 2) + pow(velocityZ, 2));
   /* velocity in cm/s */
   rangingMessage->header.velocity = (short) (velocity * 100);
