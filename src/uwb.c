@@ -3,23 +3,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "uwb.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
 #include "task.h"
-#include "dwTypes.h"
+
+#include "uwb.h"
 #include "swarm_ranging.h"
 #include "libdw3000.h"
+#include "dw3000.h"
+#include "dwTypes.h"
 
 extern dwOps_t dwt_ops;
 static bool isInit = false;
 static SemaphoreHandle_t irq_semphr;
-static SemaphoreHandle_t ranging_set_lock;
-static QueueHandle_t tx_queue;
 static StaticQueue_t tx_queue_buffer;
 static uint8_t tx_queue_storage[TX_QUEUE_SIZE * TX_QUEUE_ITEM_SIZE];
-
+static uint16_t MY_UWB_ADDRESS = 1;
 static QueueHandle_t txQueue;
 static xQueueHandle queues[MESSAGE_TYPE_COUNT];
 static UWB_Message_Listener_t listeners[MESSAGE_TYPE_COUNT];
@@ -67,7 +67,7 @@ static void rxTimeoutCallback() {
 }
 
 static void rxErrorCallback() {
-  DEBUG_PRINT("rxErrorCallback: some error occurs when rx\n");
+
 }
 
 uint16_t getUWBAddress() {
@@ -101,29 +101,29 @@ void uwbRegisterListener(UWB_Message_Listener_t *listener) {
 
 void queueInit() {
   txQueue = xQueueCreateStatic(TX_QUEUE_SIZE, TX_QUEUE_ITEM_SIZE, tx_queue_storage,
-                                &tx_queue_buffer);
+                               &tx_queue_buffer);
 }
 SPI_HandleTypeDef hspi1;
 uint16_t alignedBuffer[FRAME_LEN_MAX + 1];
 
-void spiRead(const void *header, size_t headerLength, void* data, size_t dataLength) {
+void spiRead(const void *header, size_t headerLength, void *data, size_t dataLength) {
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 0);
 
   memcpy(alignedBuffer, header, headerLength);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, headerLength, HAL_MAX_DELAY);
-  HAL_SPI_Receive(&hspi1, (uint8_t *)alignedBuffer, dataLength, HAL_MAX_DELAY);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *) alignedBuffer, headerLength, HAL_MAX_DELAY);
+  HAL_SPI_Receive(&hspi1, (uint8_t *) alignedBuffer, dataLength, HAL_MAX_DELAY);
   memcpy(data, alignedBuffer, dataLength);
 
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 1);
 }
 
-void spiWrite(const void *header, size_t headerLength, const void* data, size_t dataLength) {
+void spiWrite(const void *header, size_t headerLength, const void *data, size_t dataLength) {
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 0);
 
   memcpy(alignedBuffer, header, headerLength);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, headerLength, HAL_MAX_DELAY);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *) alignedBuffer, headerLength, HAL_MAX_DELAY);
   memcpy(alignedBuffer, data, dataLength);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)alignedBuffer, dataLength, HAL_MAX_DELAY);
+  HAL_SPI_Transmit(&hspi1, (uint8_t *) alignedBuffer, dataLength, HAL_MAX_DELAY);
 
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, 1);
 }
@@ -172,10 +172,10 @@ void spiSetSpeed(dwSpiSpeed_t speed) {
 #define DW_RESET_GPIO_Port GPIOB
 
 void reset(void) {
-    HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 0);
-    HAL_Delay(2);
-    HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 1);
-    NVIC_EnableIRQ(EXTI0_1_IRQn);
+  HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 0);
+  HAL_Delay(2);
+  HAL_GPIO_WritePin(GPIOB, DW_RESET_Pin, 1);
+  NVIC_EnableIRQ(EXTI0_1_IRQn);
 }
 
 void dwOpsInit() {
@@ -193,7 +193,6 @@ void uwbInit() {
   static StaticSemaphore_t irq_semphr_buffer;
   irq_semphr = xSemaphoreCreateBinaryStatic(&irq_semphr_buffer);
   static StaticSemaphore_t ranging_set_lock_buffer;
-  ranging_set_lock = xSemaphoreCreateBinaryStatic(&ranging_set_lock_buffer);
   isInit = true;
   dwOpsInit();
   // port_set_dw_ic_spi_fastrate();
@@ -214,7 +213,7 @@ void uwbInit() {
     return;
   }
   dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK);
-  
+
   /* Configure the TX spectrum parameters (power, PG delay and PG count) */
   dwt_configuretxrf(&txconfig_options);
 
@@ -227,7 +226,7 @@ void uwbInit() {
   dwt_or32bitoffsetreg(SYS_CFG_ID, 0, SYS_CFG_RXAUTR_BIT_MASK);
   dwt_setrxtimeout(DEFAULT_RX_TIMEOUT);
 
-  dwt_setcallbacks(&tx_cb, &rx_cb, &rx_to_cb, &rx_err_cb, NULL, NULL);
+  dwt_setcallbacks(&txCallback, &rxCallback, &rxTimeoutCallback, &rxErrorCallback, NULL, NULL);
   /* Enable wanted interrupts (TX confirmation, RX good frames, RX timeouts and
    * RX errors). */
   dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK |
@@ -250,7 +249,7 @@ void uwbInit() {
 
 static int checkIrq() { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0); }
 
-static void uwbTask(void* parameters) {
+static void uwbTask(void *parameters) {
   while (!isInit) {
     printf("false");
     vTaskDelay(1000);
@@ -264,7 +263,7 @@ static void uwbTask(void* parameters) {
   }
 }
 
-static void uwbTxTask(void* parameters) {
+static void uwbTxTask(void *parameters) {
   while (!isInit) {
     printf("false");
     vTaskDelay(1000);
@@ -279,7 +278,6 @@ static void uwbTxTask(void* parameters) {
       /* Start transmission. */
       if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) ==
           DWT_ERROR) {
-        DEBUG_PRINT("uwbTxTask:  TX ERROR\n");
       }
     }
   }
@@ -305,12 +303,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   BaseType_t higherPriorityTaskWoken = pdFALSE;
 
   switch (GPIO_Pin) {
-    case GPIO_PIN_0:
-      xSemaphoreGiveFromISR(irq_semphr, &higherPriorityTaskWoken);
+    case GPIO_PIN_0:xSemaphoreGiveFromISR(irq_semphr, &higherPriorityTaskWoken);
       HAL_NVIC_ClearPendingIRQ(EXTI0_1_IRQn);
       break;
-    default:
-      break;
+    default:break;
   }
   portYIELD_FROM_ISR(higherPriorityTaskWoken);
 }

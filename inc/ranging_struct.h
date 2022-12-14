@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
-#include "dwTypes.h"
+#include "libdw3000.h"
 #include "uwb.h"
 
 #define MAX_BODY_UNIT_NUMBER 3

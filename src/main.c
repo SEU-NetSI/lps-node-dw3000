@@ -66,14 +66,6 @@ void test_run_info(unsigned char *data)
 static StaticTask_t xExampleTask;
 static StackType_t ucExampleStack[configMINIMAL_STACK_SIZE];
 
-static void example_task(void *pvParameters)
-{
-  printf("ID:%08x\r\n", dwt_readdevid());
-  printf("====examples====\r\n");
-  build_examples();
-  example_pointer();
-}
-
 void systemInit()
 {
   bool selftestPasses = true;
@@ -131,8 +123,8 @@ void systemInit()
   usbcommSetSystemStarted(true);
 
   // xTaskCreateStatic(example_task, "exampleTask", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 3, ucExampleStack, &xExampleTask);
-  uwbInit();
-  uwbStart();
+//  uwbInit();
+//  uwbStart();
 }
 
 static StaticTask_t xMainTask;
