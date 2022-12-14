@@ -68,7 +68,7 @@ void rangingTableShift(Ranging_Table_t *rangingTable) {
 static set_index_t rangingTableSetMalloc(
     Ranging_Table_Set_t *rangingTableSet) {
   if (rangingTableSet->freeQueueEntry == -1) {
-    DEBUG_PRINT("Ranging Table Set is FULL, malloc failed.\n");
+//    DEBUG_PRINT("Ranging Table Set is FULL, malloc failed.\n");
     return -1;
   } else {
     set_index_t candidate = rangingTableSet->freeQueueEntry;
@@ -156,16 +156,16 @@ bool deleteRangingTableByIndex(Ranging_Table_Set_t *rangingTableSet,
 }
 
 void printRangingTable(Ranging_Table_t *table) {
-  DEBUG_PRINT("Rp = %u, Tr = %u, Rf = %u, \n",
-              table->Rp.seqNumber,
-              table->TrRrBuffer.candidates[table->TrRrBuffer.latest].Tr.seqNumber,
-              table->Rf.seqNumber);
-  DEBUG_PRINT("Tp = %u, Rr = %u, Tf = %u, Re = %u, \n",
-              table->Tp.seqNumber,
-              table->TrRrBuffer.candidates[table->TrRrBuffer.latest].Rr.seqNumber,
-              table->Tf.seqNumber,
-              table->Re.seqNumber);
-  DEBUG_PRINT("====\n");
+//  DEBUG_PRINT("Rp = %u, Tr = %u, Rf = %u, \n",
+//              table->Rp.seqNumber,
+//              table->TrRrBuffer.candidates[table->TrRrBuffer.latest].Tr.seqNumber,
+//              table->Rf.seqNumber);
+//  DEBUG_PRINT("Tp = %u, Rr = %u, Tf = %u, Re = %u, \n",
+//              table->Tp.seqNumber,
+//              table->TrRrBuffer.candidates[table->TrRrBuffer.latest].Rr.seqNumber,
+//              table->Tf.seqNumber,
+//              table->Re.seqNumber);
+//  DEBUG_PRINT("====\n");
 //  DEBUG_PRINT("Rp = %2x%8lx, Tr = %2x%8lx, Rf = %2x%8lx, \n",
 //              table->Rp.timestamp.high8,
 //              table->Rp.timestamp.low32,
@@ -252,30 +252,30 @@ void sortRangingTableSet(Ranging_Table_Set_t *rangingTableSet) {
 }
 
 void printRangingMessage(Ranging_Message_t *rangingMessage) {
-  DEBUG_PRINT(
-      "msgLength=%u, msgSequence=%d, srcAddress=%u, velocity=%d\n, last_tx_timestamp_seq=%u, lastTxTimestamp=%2x%8lx\n",
-      rangingMessage->header.msgLength,
-      rangingMessage->header.msgSequence,
-      rangingMessage->header.srcAddress,
-      rangingMessage->header.velocity,
-      rangingMessage->header.lastTxTimestamp.seqNumber,
-      rangingMessage->header.lastTxTimestamp.timestamp.high8,
-      rangingMessage->header.lastTxTimestamp.timestamp.low32);
-
-  if (rangingMessage->header.msgLength - sizeof(Ranging_Message_Header_t) == 0) {
-    return;
-  }
-  int body_unit_number = (rangingMessage->header.msgLength - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
-  if (body_unit_number >= MAX_BODY_UNIT_NUMBER) {
-    DEBUG_PRINT("===printRangingMessage: wrong body unit number occurs===\n");
-    return;
-  }
-  for (int i = 0; i < body_unit_number; i++) {
-    DEBUG_PRINT("body_unit_address=%u, body_unit_seq=%u\n",
-                rangingMessage->bodyUnits[i].address,
-                rangingMessage->bodyUnits[i].timestamp.seqNumber);
-    DEBUG_PRINT("body_unit_timestamp=%2x%8lx\n",
-                rangingMessage->bodyUnits[i].timestamp.timestamp.high8,
-                rangingMessage->bodyUnits[i].timestamp.timestamp.low32);
-  }
+//  DEBUG_PRINT(
+//      "msgLength=%u, msgSequence=%d, srcAddress=%u, velocity=%d\n, last_tx_timestamp_seq=%u, lastTxTimestamp=%2x%8lx\n",
+//      rangingMessage->header.msgLength,
+//      rangingMessage->header.msgSequence,
+//      rangingMessage->header.srcAddress,
+//      rangingMessage->header.velocity,
+//      rangingMessage->header.lastTxTimestamp.seqNumber,
+//      rangingMessage->header.lastTxTimestamp.timestamp.high8,
+//      rangingMessage->header.lastTxTimestamp.timestamp.low32);
+//
+//  if (rangingMessage->header.msgLength - sizeof(Ranging_Message_Header_t) == 0) {
+//    return;
+//  }
+//  int body_unit_number = (rangingMessage->header.msgLength - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t);
+//  if (body_unit_number >= MAX_BODY_UNIT_NUMBER) {
+//    DEBUG_PRINT("===printRangingMessage: wrong body unit number occurs===\n");
+//    return;
+//  }
+//  for (int i = 0; i < body_unit_number; i++) {
+//    DEBUG_PRINT("body_unit_address=%u, body_unit_seq=%u\n",
+//                rangingMessage->bodyUnits[i].address,
+//                rangingMessage->bodyUnits[i].timestamp.seqNumber);
+//    DEBUG_PRINT("body_unit_timestamp=%2x%8lx\n",
+//                rangingMessage->bodyUnits[i].timestamp.timestamp.high8,
+//                rangingMessage->bodyUnits[i].timestamp.timestamp.low32);
+//  }
 }

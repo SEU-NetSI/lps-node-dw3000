@@ -57,21 +57,21 @@ int16_t getDistance(uint16_t neighborAddress) {
 }
 
 static void uwbRangingTxTask(void *parameters) {
-  systemWaitStart();
+//  systemWaitStart();
 
   UWB_Packet_t txPacketCache;
   txPacketCache.header.type = RANGING;
 //  txPacketCache.header.mac = ? TODO init mac header
   while (true) {
     int msgLen = generateRangingMessage((Ranging_Message_t *) &txPacketCache.payload);
-    txPacketCache.header.length = sizeof (Packet_Header_t) + msgLen;
+    txPacketCache.header.length = sizeof(Packet_Header_t) + msgLen;
     uwbSendPacketBlock(&txPacketCache);
     vTaskDelay(TX_PERIOD_IN_MS);
   }
 }
 
 static void uwbRangingRxTask(void *parameters) {
-  systemWaitStart();
+//  systemWaitStart();
 
   Ranging_Message_With_Timestamp_t rxPacketCache;
 
@@ -83,10 +83,16 @@ static void uwbRangingRxTask(void *parameters) {
   }
 }
 
+static StaticQueue_t RANGING_RX_QUEUE_BUFFER;
+static uint8_t RANGING_RX_QUEUE_STORAGE[TX_QUEUE_SIZE * TX_QUEUE_ITEM_SIZE];
+
 void rangingInit() {
   MY_UWB_ADDRESS = getUWBAddress();
 //  DEBUG_PRINT("MY_UWB_ADDRESS = %d \n", MY_UWB_ADDRESS);
-  rxQueue = xQueueCreate(RANGING_RX_QUEUE_SIZE, RANGING_RX_QUEUE_ITEM_SIZE);
+  rxQueue = xQueueCreateStatic(RANGING_RX_QUEUE_SIZE,
+                               RANGING_RX_QUEUE_ITEM_SIZE,
+                               RANGING_RX_QUEUE_STORAGE,
+                               &RANGING_RX_QUEUE_BUFFER);
   rangingTableSetInit(&rangingTableSet);
 
   listener.type = RANGING;
@@ -95,10 +101,16 @@ void rangingInit() {
   listener.txCb = rangingTxCallback;
   uwbRegisterListener(&listener);
 
-  xTaskCreate(uwbRangingTxTask, "ADHOC_DECK_RANGING_TX_TASK_NAME", 4 * configMINIMAL_STACK_SIZE, NULL,
-              configMAX_PRIORITIES - 1, &uwbRangingTxTaskHandle); // TODO optimize STACK SIZE
-  xTaskCreate(uwbRangingRxTask, "ADHOC_DECK_RANGING_RX_TASK_NAME", 4 * configMINIMAL_STACK_SIZE, NULL,
-              configMAX_PRIORITIES - 1, &uwbRangingRxTaskHandle); // TODO optimize STACK SIZE
+  static StaticTask_t uwbRangingTxStaticTask;
+  static StackType_t uwbRangingTxStaticStack[configMINIMAL_STACK_SIZE * 2];
+
+  static StaticTask_t uwbRangingRxStaticTask;
+  static StackType_t uwbRangingRxStaticStack[configMINIMAL_STACK_SIZE * 2];
+
+  xTaskCreateStatic(uwbRangingTxTask, "ranging_tx_task", configMINIMAL_STACK_SIZE * 2, NULL,
+                    configMAX_PRIORITIES - 1, uwbRangingTxStaticStack, &uwbRangingTxStaticTask);
+  xTaskCreateStatic(uwbRangingRxTask, "ranging_rx_task", configMINIMAL_STACK_SIZE * 2, NULL,
+                    configMAX_PRIORITIES - 1, uwbRangingRxStaticStack, &uwbRangingRxStaticTask);
 }
 
 int16_t computeDistance(Timestamp_Tuple_t Tp, Timestamp_Tuple_t Rp,
@@ -117,12 +129,12 @@ int16_t computeDistance(Timestamp_Tuple_t Tp, Timestamp_Tuple_t Rp,
 
   bool isErrorOccurred = false;
   if (distance > 1000 || distance < 0) {
-    DEBUG_PRINT("isErrorOccurred\n");
+//    DEBUG_PRINT("isErrorOccurred\n");
     isErrorOccurred = true;
   }
 
   if (tRound2 < 0 || tReply2 < 0) {
-    DEBUG_PRINT("tRound2 < 0 || tReply2 < 0\n");
+//    DEBUG_PRINT("tRound2 < 0 || tReply2 < 0\n");
     isErrorOccurred = true;
   }
 
@@ -200,9 +212,9 @@ void processRangingMessage(Ranging_Message_With_Timestamp_t *rangingMessageWithT
       if (distance > 0) {
         neighborRangingTable->distance = distance;
         distanceTowards[neighborRangingTable->neighborAddress] = distance;
-        DEBUG_PRINT("distance to %d = %d \n", neighborAddress, distance);
+//        DEBUG_PRINT("distance to %d = %d \n", neighborAddress, distance);
       } else {
-        DEBUG_PRINT("distance is not updated since some error occurs");
+//        DEBUG_PRINT("distance is not updated since some error occurs");
       }
     }
   }

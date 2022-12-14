@@ -107,5 +107,7 @@ int uwbReceivePacketWait(MESSAGE_TYPE type, UWB_Packet_t *packet, int wait);
 void uwbRegisterListener(UWB_Message_Listener_t *listener);
 dwTime_t getPacketSendTime();
 dwTime_t getPacketReceivedTime();
+void uwbInit();
+void uwbStart();
 
 #endif

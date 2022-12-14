@@ -123,8 +123,8 @@ void systemInit()
   usbcommSetSystemStarted(true);
 
   // xTaskCreateStatic(example_task, "exampleTask", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 3, ucExampleStack, &xExampleTask);
-//  uwbInit();
-//  uwbStart();
+  uwbInit();
+  uwbStart();
 }
 
 static StaticTask_t xMainTask;
