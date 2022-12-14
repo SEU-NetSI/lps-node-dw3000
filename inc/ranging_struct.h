@@ -1,64 +1,81 @@
+#ifndef __RANGING_STRUCT_H__
+#define __RANGING_STRUCT_H__
+
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
+#include "dwTypes.h"
+#include "uwb.h"
 
-#define MAX_NEIGHBOR_SIZE 5
-#define RANGING_TABLE_SIZE MAX_NEIGHBOR_SIZE
-// #define MAX_BODY_UNIT_NUMBER \
-//   (FRAME_LEN_MAX - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t)
-#define MAX_BODY_UNIT_NUMBER 5
+#define MAX_BODY_UNIT_NUMBER 3
+//#define MAX_BODY_UNIT_NUMBER (FRAME_LEN_MAX - sizeof(Ranging_Message_Header_t)) / sizeof(Body_Unit_t) // 1 ~ 83
+#define RANGING_TABLE_SIZE 2
 #define RANGING_TABLE_HOLD_TIME 10000
 
-typedef uint16_t address_t;
 typedef portTickType Time_t;
 typedef short set_index_t;
 
-/* timestamp */
-typedef union dwTime_u {
-  uint8_t raw[5];
-  uint64_t full;
-  struct {
-    uint32_t low32;
-    uint8_t high8;
-  } __attribute__((packed));
-  struct {
-    uint8_t low8;
-    uint32_t high32;
-  } __attribute__((packed));
-} dw_time_t;
-
 /* Timestamp Tuple */
 typedef struct {
-  uint16_t sequence_number; // 2 byte
-  dw_time_t timestamp; // 8 byte
+  dwTime_t timestamp; // 8 byte
+  uint16_t seqNumber; // 2 byte
 } __attribute__((packed)) Timestamp_Tuple_t; // 10 byte
 
 /* Body Unit */
 typedef struct {
-  address_t address; // 2 byte
+  uint16_t address; // 2 byte
   Timestamp_Tuple_t timestamp; // 10 byte
 } __attribute__((packed)) Body_Unit_t; // 12 byte
 
 /* Ranging Message Header*/
 typedef struct {
-  address_t source_address; // 2 byte
-  uint16_t message_sequence; // 2 byte
-  Timestamp_Tuple_t last_tx_timestamp; // 10 byte
-  short velocity; // 2 byte 
-  uint16_t message_length; // 2 byte
-} __attribute__((packed)) Ranging_Message_Header_t; // 18 byte
+  uint16_t srcAddress; // 2 byte
+  uint16_t msgSequence; // 2 byte
+  Timestamp_Tuple_t lastTxTimestamp; // 10 byte
+  short velocity; // 2 byte cm/s
+  uint16_t msgLength; // 2 byte
+  uint16_t filter; // 16 bits bloom filter
+} __attribute__((packed)) Ranging_Message_Header_t; // 20 byte
 
 /* Ranging Message */
 typedef struct {
   Ranging_Message_Header_t header; // 18 byte
-  Body_Unit_t body_units[MAX_NEIGHBOR_SIZE]; // 12 byte * MAX_NEIGHBOR_SIZE
-} __attribute__((packed)) Ranging_Message_t; // 18 + 12 byte * MAX_NEIGHBOR_SIZE
+  Body_Unit_t bodyUnits[MAX_BODY_UNIT_NUMBER]; // 12 byte * MAX_NEIGHBOR_SIZE
+} __attribute__((packed)) Ranging_Message_t; // 20 + 12 byte * MAX_NEIGHBOR_SIZE
 
 /* Ranging Message With RX Timestamp, used in RX Queue */
 typedef struct {
-  Ranging_Message_t ranging_message;
-  dw_time_t rx_time;
+  Ranging_Message_t rangingMessage;
+  dwTime_t rxTime;
 } __attribute__((packed)) Ranging_Message_With_Timestamp_t;
+
+#define Tr_Rr_BUFFER_SIZE 5
+
+typedef struct {
+  Timestamp_Tuple_t Tr;
+  Timestamp_Tuple_t Rr;
+} __attribute__((packed)) Ranging_Table_Tr_Rr_Candidate_t;
+
+/* Tr and Rr candidate buffer for each Ranging Table */
+typedef struct {
+  set_index_t latest;
+  set_index_t cur;
+  Ranging_Table_Tr_Rr_Candidate_t candidates[Tr_Rr_BUFFER_SIZE];
+} __attribute__((packed)) Ranging_Table_Tr_Rr_Buffer_t;
+
+/* Tr_Rr Buffer Operations */
+void rangingTableBufferInit(Ranging_Table_Tr_Rr_Buffer_t *rangingTableBuffer);
+void rangingTableBufferUpdate(Ranging_Table_Tr_Rr_Buffer_t *rangingTableBuffer,
+                              Timestamp_Tuple_t Tr,
+                              Timestamp_Tuple_t Rr);
+Ranging_Table_Tr_Rr_Candidate_t rangingTableBufferGetCandidate(Ranging_Table_Tr_Rr_Buffer_t *rangingTableBuffer,
+                                                               Timestamp_Tuple_t Tf);
+
+typedef enum {
+  RESERVED = 0,
+  TRANSMITTED = 1, // indicate body unit is transmitted
+  RECEIVED = 2,
+} RANGING_TABLE_STATE;
 
 /* Ranging Table
   +------+------+------+------+------+
@@ -68,21 +85,25 @@ typedef struct {
   +------+------+------+------+------+
 */
 typedef struct {
-  address_t neighbor_address;
+  uint16_t neighborAddress;
 
   Timestamp_Tuple_t Rp;
   Timestamp_Tuple_t Tp;
-  Timestamp_Tuple_t Rr;
-  Timestamp_Tuple_t Tr;
+  Ranging_Table_Tr_Rr_Buffer_t TrRrBuffer;
   Timestamp_Tuple_t Rf;
   Timestamp_Tuple_t Tf;
   Timestamp_Tuple_t Re;
 
   Time_t period;
-  Time_t next_delivery_time;
-  Time_t expiration_time;
+  Time_t nextDeliveryTime;
+  Time_t expirationTime;
   int16_t distance;
+
+  RANGING_TABLE_STATE state;
 } __attribute__((packed)) Ranging_Table_t;
+
+void rangingTableInit(Ranging_Table_t *rangingTable, uint16_t address);
+void rangingTableShift(Ranging_Table_t *rangingTable);
 
 typedef struct {
   set_index_t next;
@@ -91,32 +112,32 @@ typedef struct {
 
 /* Ranging Table Set*/
 typedef struct {
-  Ranging_Table_Set_Item_t set_data[RANGING_TABLE_SIZE];
-  set_index_t free_queue_entry;
-  set_index_t full_queue_entry;
+  Ranging_Table_Set_Item_t setData[RANGING_TABLE_SIZE];
+  set_index_t freeQueueEntry;
+  set_index_t fullQueueEntry;
   int size;
 } Ranging_Table_Set_t;
 
-Ranging_Table_Set_t ranging_table_set;
-
 /*Ranging Table Set Operations*/
-void ranging_table_set_init(Ranging_Table_Set_t *ranging_table_set);
+void rangingTableSetInit(Ranging_Table_Set_t *rangingTableSet);
 
-set_index_t ranging_table_set_insert(Ranging_Table_Set_t *ranging_table_set,
-                                     Ranging_Table_t *table);
+set_index_t rangingTableSetInsert(Ranging_Table_Set_t *rangingTableSet,
+                                  Ranging_Table_t *rangingTable);
 
-set_index_t find_in_ranging_table_set(Ranging_Table_Set_t *ranging_table_set,
-                                      address_t addr);
+set_index_t findInRangingTableSet(Ranging_Table_Set_t *rangingTableSet,
+                                  uint16_t address);
 
-bool delete_ranging_tuple_by_index(Ranging_Table_Set_t *ranging_table_set,
-                                   set_index_t index);
+bool deleteRangingTableByIndex(Ranging_Table_Set_t *rangingTableSet,
+                               set_index_t index);
 
-void print_ranging_table_tuple(Ranging_Table_t *tuple);
+bool rangingTableSetClearExpire(Ranging_Table_Set_t *rangingTableSet);
 
-void print_ranging_table(Ranging_Table_Set_t *ranging_table_set);
+void sortRangingTableSet(Ranging_Table_Set_t *rangingTableSet);
 
-void print_ranging_message(Ranging_Message_t *ranging_message);
+void printRangingTable(Ranging_Table_t *rangingTable);
 
-bool ranging_table_clear_expire(Ranging_Table_Set_t *ranging_table_set);
+void printRangingTableSet(Ranging_Table_Set_t *rangingTableSet);
 
-void sort_ranging_table_set(Ranging_Table_Set_t *ranging_table_set);
+void printRangingMessage(Ranging_Message_t *rangingMessage);
+
+#endif
