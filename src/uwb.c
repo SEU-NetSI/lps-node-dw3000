@@ -13,6 +13,7 @@
 #include "dwTypes.h"
 #include "libdw3000.h"
 #include "dw3000.h"
+#include "usbcomm.h"
 
 extern dwOps_t dwt_ops;
 static bool isInit = false;
@@ -199,16 +200,16 @@ static void uwbRxTask(void* parameters) {
 
   while (true) {
     if (xQueueReceive(rx_queue, &rx_packet_cache, portMAX_DELAY)) {
-      uint16_t * payload = &rx_packet_cache.payload;
       if (rx_packet_cache.header.type == RANGING) {
-        printf("Received Ranging Message \r\n");
-        printf("Received from %d, length = %d \r\n", payload[0], rx_packet_cache.header.length);
+        usbcommWrite((char *) &rx_packet_cache, rx_packet_cache.header.length);
+        // printf("Received Ranging Message \r\n");
+        // printf("Received from %d, length = %d \r\n", payload[0], rx_packet_cache.header.length);
       }
       if (rx_packet_cache.header.type == FLOODING) {
-        printf("Received Flooding Message \r\n");
+        // printf("Received Flooding Message \r\n");
       }
       if (rx_packet_cache.header.type == DATA) {
-        printf("Received Data Message \r\n");
+        // printf("Received Data Message \r\n");
       }
     }
   }
@@ -253,8 +254,8 @@ void rx_cb() {
                    0); /* No need to read the FCS/CRC. */
   }
   UWB_Packet_t *packet = (UWB_Packet_t *) &rx_buffer;
-  printf("===Rx callback===\r\n");
-  printf("rx_data length = %d \r\n", data_length - FCS_LEN);
+  // printf("===Rx callback===\r\n");
+  // printf("rx_data length = %d \r\n", data_length - FCS_LEN);
 
   xQueueSendFromISR(rx_queue, packet,
                     &xHigherPriorityTaskWoken);
